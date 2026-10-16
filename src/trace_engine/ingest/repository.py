@@ -10,9 +10,28 @@ from trace_engine.ingest.hashing import hash_file
 class RepositoryScanner:
     """Discovers and catalogs source code files across a project directory."""
 
-    def __init__(self, repo_path: Path):
+    def __init__(
+        self,
+        repo_path: Path,
+        exclude_patterns: List[str] = None,
+        only_top_dirs: List[str] = None,
+    ):
         self.repo_path = repo_path.resolve()
-        self.ignore_filter = IgnoreFilter(self.repo_path)
+        self.ignore_filter = IgnoreFilter(self.repo_path, custom_patterns=exclude_patterns)
+        self.only_top_dirs = (
+            {d.lower() for d in only_top_dirs} if only_top_dirs is not None else None
+        )
+
+    def _outside_only_scope(self, item: Path) -> bool:
+        if self.only_top_dirs is None:
+            return False
+        try:
+            rel = item.relative_to(self.repo_path)
+        except ValueError:
+            return True
+        if not rel.parts:
+            return False
+        return rel.parts[0].lower() not in self.only_top_dirs
 
     def scan(self) -> List[SourceFile]:
         """Scans the repository and returns discovered source files."""
@@ -21,6 +40,8 @@ class RepositoryScanner:
             return source_files
 
         for item in self.repo_path.rglob("*"):
+            if self._outside_only_scope(item):
+                continue
             if item.is_file() and not self.ignore_filter.should_ignore(item):
                 lang = detect_language(item)
                 if lang is not None and lang != "unknown":

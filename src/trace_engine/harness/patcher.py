@@ -1,11 +1,51 @@
 """Safe code patching and rollback engine for the TRACE Agent Harness."""
 
 import difflib
+import re
 import shutil
 import time
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Optional, Tuple
 from trace_engine.harness.context import PatchResult
+
+
+class WorkspaceBoundaryError(ValueError):
+    """Raised when a patch path escapes the workspace root."""
+
+
+_ABSOLUTE_WIN_DRIVE = re.compile(r"^[A-Za-z]:[\\/]")
+_UNC_PREFIXES = ("\\\\", "//")
+
+
+def _looks_like_absolute_or_unc(rel_path: str) -> bool:
+    """Detect absolute/UNC/drive-letter shapes on any platform.
+
+    Windows-only ``Path.is_absolute()`` is insufficient when a Windows-style
+    path is evaluated on POSIX (and vice versa), so check PureWindowsPath
+    semantics explicitly plus UNC prefixes in either separator style.
+    """
+    if not rel_path:
+        return True
+    if "\x00" in rel_path:
+        return True
+    text = rel_path.replace("/", "\\")
+    if rel_path.startswith("/") or rel_path.startswith("\\"):
+        return True
+    if text.startswith("\\\\"):
+        return True
+    if _ABSOLUTE_WIN_DRIVE.match(rel_path):
+        return True
+    try:
+        if PureWindowsPath(rel_path).is_absolute():
+            return True
+    except Exception:
+        return True
+    try:
+        if Path(rel_path).is_absolute():
+            return True
+    except Exception:
+        return True
+    return False
 
 
 class SafePatcher:
@@ -16,10 +56,55 @@ class SafePatcher:
         self.backup_dir = self.workspace_root / ".trace" / "backups"
         self.backup_dir.mkdir(parents=True, exist_ok=True)
 
+    def _resolve_contained(self, rel_path: str) -> Path:
+        """Resolve *rel_path* strictly inside the workspace root.
+
+        Rejects absolute paths, Windows drive-letter paths, UNC paths,
+        null bytes, ``..`` escapes, and symlinks/junctions that resolve
+        outside the workspace. Returns the resolved absolute target so
+        callers operate on the validated destination (no reconstruction).
+        """
+        if not isinstance(rel_path, str) or not rel_path:
+            raise WorkspaceBoundaryError("Empty patch path is not allowed.")
+        if _looks_like_absolute_or_unc(rel_path):
+            raise WorkspaceBoundaryError(
+                f"Absolute path is not allowed in workspace: {rel_path!r}"
+            )
+        candidate = self.workspace_root / rel_path
+        try:
+            resolved = candidate.resolve()
+        except Exception as e:
+            raise WorkspaceBoundaryError(f"Unresolvable patch path {rel_path!r}: {e}")
+        try:
+            contained = resolved.is_relative_to(self.workspace_root)
+        except Exception:
+            contained = False
+        if not contained:
+            raise WorkspaceBoundaryError(
+                f"Path escapes workspace root: {rel_path!r}"
+            )
+        return resolved
+
+    def _resolve_backup_file(self, backup_path: Path) -> Path:
+        """Resolve a rollback source strictly inside this patcher's backup dir."""
+        try:
+            resolved = Path(backup_path).resolve()
+        except Exception as e:
+            raise WorkspaceBoundaryError(f"Unresolvable backup path: {e}")
+        try:
+            contained = resolved.is_relative_to(self.backup_dir.resolve())
+        except Exception:
+            contained = False
+        if not contained:
+            raise WorkspaceBoundaryError(
+                "Backup file is outside the workspace backup directory."
+            )
+        return resolved
+
     def backup(self, rel_path: str) -> Path:
         """Create timestamped backup of the target file."""
-        target = self.workspace_root / rel_path
-        if not target.exists():
+        target = self._resolve_contained(rel_path)
+        if not target.exists() or not target.is_file():
             raise FileNotFoundError(f"Target file {rel_path} does not exist in workspace.")
 
         timestamp = int(time.time() * 1000)
@@ -36,7 +121,15 @@ class SafePatcher:
         replacement_content: str,
     ) -> PatchResult:
         """Replace target string block with replacement content, creating a rollback backup."""
-        file_path = self.workspace_root / rel_path
+        try:
+            file_path = self._resolve_contained(rel_path)
+        except WorkspaceBoundaryError as e:
+            return PatchResult(
+                finding_id=finding_id,
+                target_file=rel_path,
+                success=False,
+                error=f"Workspace boundary violation: {e}",
+            )
         if not file_path.exists():
             return PatchResult(
                 finding_id=finding_id,
@@ -92,7 +185,15 @@ class SafePatcher:
         new_content: str,
     ) -> PatchResult:
         """Write entire new file content, creating a rollback backup."""
-        file_path = self.workspace_root / rel_path
+        try:
+            file_path = self._resolve_contained(rel_path)
+        except WorkspaceBoundaryError as e:
+            return PatchResult(
+                finding_id=finding_id,
+                target_file=rel_path,
+                success=False,
+                error=f"Workspace boundary violation: {e}",
+            )
         if not file_path.exists():
             return PatchResult(
                 finding_id=finding_id,
@@ -131,9 +232,13 @@ class SafePatcher:
 
     def rollback(self, rel_path: str, backup_path: Path) -> bool:
         """Restore file from backup."""
-        target = self.workspace_root / rel_path
-        if backup_path.exists():
-            shutil.copy2(backup_path, target)
+        try:
+            target = self._resolve_contained(rel_path)
+            source = self._resolve_backup_file(backup_path)
+        except WorkspaceBoundaryError:
+            return False
+        if source.exists() and source.is_file():
+            shutil.copy2(source, target)
             return True
         return False
 

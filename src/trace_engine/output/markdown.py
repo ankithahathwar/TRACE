@@ -5,7 +5,11 @@ from typing import List
 from trace_engine.findings.model import Finding
 
 
-def generate_markdown_report(findings: List[Finding], project_name: str = "Application") -> str:
+def generate_markdown_report(
+    findings: List[Finding],
+    project_name: str = "Application",
+    scope_summary=None,
+) -> str:
     lines = [
         f"# TRACE Security Assessment Report — {project_name}",
         "Threat Reconnaissance & Attack-path Correlation Engine",
@@ -14,9 +18,22 @@ def generate_markdown_report(findings: List[Finding], project_name: str = "Appli
         f"- **Target Application:** `{project_name}`",
         f"- **Total Correlated Findings:** **{len(findings)}**",
         "",
-        "| ID | Severity | Confidence | Category | Endpoint | Remediation Action |",
-        "|---|---|---|---|---|---|",
     ]
+    if scope_summary is not None:
+        lines.append("## Scan Scope")
+        for scope_line in scope_summary.summary_lines():
+            lines.append(f"- {scope_line}")
+        if scope_summary.excluded_top_dirs:
+            lines.append("- Findings from excluded directories are out of scope for this report;")
+            lines.append("  run with `--scope full` (or the fixtures profile) to assess them separately.")
+        lines.append("")
+
+    lines.extend(
+        [
+            "| ID | Severity | Confidence | Category | Endpoint | Remediation Action |",
+            "|---|---|---|---|---|---|",
+        ]
+    )
 
     for f in findings:
         action_summary = f.short_action or f.title

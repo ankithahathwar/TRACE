@@ -31,7 +31,7 @@ from trace_engine.apm.builder import APMBuilder
 from trace_engine.apm.model import AttackPathModel
 from trace_engine.apm.serialization import save_apm_sqlite, export_apm_json
 from trace_engine.security.hypotheses import HypothesisEngine, SecurityHypothesis
-from trace_engine.policy.scope import ScopeGuard
+from trace_engine.policy.scope import ScopeGuard, ScopeViolationError
 from trace_engine.runtime.target import Target
 from trace_engine.runtime.client import ScopedHttpClient
 from trace_engine.testpacks.registry import default_registry
@@ -286,13 +286,18 @@ def analyze(
 def test(
     path: Path = typer.Argument(Path("."), help="Path to project repository"),
     target: str = typer.Option("http://127.0.0.1:18080", "--target", "-t", help="Target URL (must be localhost or authorized lab)"),
+    scope: str = typer.Option("full", "--scope", help="Scan scope: full (everything), app (exclude fixture/test dirs), fixtures (fixtures only)"),
 ):
     """Execute active test packs against derived hypotheses using ScopedHttpClient."""
     project_dir = path.resolve()
     config = load_config(project_dir)
 
-    # Ingest and derive hypotheses
-    scanner = RepositoryScanner(project_dir)
+    # Ingest and derive hypotheses (explicit scan scope; default full preserves behavior)
+    from trace_engine.scan_scope import VALID_PROFILES, scoped_scanner, print_scope_summary
+    if scope not in VALID_PROFILES:
+        raise typer.BadParameter(f"invalid --scope {scope!r}: choose from {', '.join(VALID_PROFILES)}")
+    scanner, scope_result = scoped_scanner(project_dir, scope)
+    print_scope_summary(console, scope_result)
     source_files = scanner.scan()
     parser = CodeParser()
     adapters = get_adapters()
@@ -319,7 +324,10 @@ def test(
         allowed_ports=config.target.allowed_ports,
         mode=config.target.scope_mode,
     )
-    scope_guard.allow_target(target)
+    try:
+        scope_guard.allow_target(target)
+    except ScopeViolationError as e:
+        console.print(f"  [yellow]Scope policy:[/yellow] target {target} refused ({e}). Continuing static-only.")
     client = ScopedHttpClient(scope_guard=scope_guard, timeout_seconds=config.runtime.timeout_seconds)
 
     # Setup test context with synthetic tokens
@@ -328,15 +336,9 @@ def test(
         active_tokens={"user-a": "user-a", "user-b": "user-b", "admin": "admin"},
     )
 
-    # Check target connectivity
-    target_online = False
-    try:
-        import httpx
-        with httpx.Client(timeout=1.0) as chk:
-            chk.get(target)
-            target_online = True
-    except Exception:
-        target_online = False
+    # Check target connectivity (scope-validated: unauthorized targets stay offline)
+    from trace_engine.runtime.client import probe_target_online as _probe_online
+    target_online = _probe_online(scope_guard, target, timeout_seconds=1.0)
 
     if target_online:
         console.print(f"\n[bold green]Executing Controlled Runtime Tests[/bold green] against [white]{target}[/white]...")
@@ -399,6 +401,7 @@ def scan(
     target: str = typer.Option("http://127.0.0.1:18080", "--target", "-t", help="Target URL (must be localhost or authorized lab)"),
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, markdown, json, or sarif"),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file path (e.g. trace-results.sarif)"),
+    scope: str = typer.Option("full", "--scope", help="Scan scope: full (everything), app (exclude fixture/test dirs), fixtures (fixtures only)"),
 ):
     """Execute end-to-end scan: Ingestion -> APM -> Signals -> Runtime Tests -> Correlated Findings."""
     project_dir = path.resolve()
@@ -411,8 +414,12 @@ def scan(
     console.print(f"\n[bold green]Starting TRACE Full Scan[/bold green] on [white]{project_dir.name}[/white]")
     console.print(f"  [dim]Target Runtime:[/dim] [white]{target}[/white]")
 
-    # 1. Ingest
-    scanner = RepositoryScanner(project_dir)
+    # 1. Ingest (explicit scan scope; default full preserves behavior)
+    from trace_engine.scan_scope import VALID_PROFILES, scoped_scanner, print_scope_summary
+    if scope not in VALID_PROFILES:
+        raise typer.BadParameter(f"invalid --scope {scope!r}: choose from {', '.join(VALID_PROFILES)}")
+    scanner, scope_result = scoped_scanner(project_dir, scope)
+    print_scope_summary(console, scope_result)
     source_files = scanner.scan()
     parser = CodeParser()
     adapters = get_adapters()
@@ -447,7 +454,10 @@ def scan(
         allowed_ports=config.target.allowed_ports,
         mode=config.target.scope_mode,
     )
-    scope_guard.allow_target(target)
+    try:
+        scope_guard.allow_target(target)
+    except ScopeViolationError as e:
+        console.print(f"  [yellow]Scope policy:[/yellow] target {target} refused ({e}). Continuing static-only.")
     client = ScopedHttpClient(scope_guard=scope_guard, timeout_seconds=config.runtime.timeout_seconds)
     context = TestContext(
         target_base_url=target,
@@ -525,6 +535,7 @@ def test_all(
     target: Optional[str] = typer.Option(None, "--target", "-t", help="Target runtime URL (must be localhost or authorized lab)"),
     format: str = typer.Option("table", "--format", "-f", help="Output format: table, markdown, json"),
     models: bool = typer.Option(True, "--models/--no-models", help="Run AI intelligence models (Laya System 1 & SecureBERT 2.0)"),
+    scope: str = typer.Option("full", "--scope", help="Scan scope: full (everything), app (exclude fixture/test dirs), fixtures (fixtures only)"),
 ):
     """Execute end-to-end full audit across all languages, test packs, and AI models."""
     import time
@@ -547,8 +558,14 @@ def test_all(
     else:
         console.print(f"  [dim]Target Runtime:[/dim] [white]{resolved_target}[/white] (auto probe)")
 
-    # 1. Ingestion across all supported languages
-    scanner = RepositoryScanner(project_dir)
+    # 1. Ingestion across all supported languages (explicit scan scope)
+    from trace_engine.scan_scope import VALID_PROFILES as _VALID2
+    from trace_engine.scan_scope import scoped_scanner as _scoped2, print_scope_summary as _print_scope2
+    if scope not in _VALID2:
+        raise typer.BadParameter(f"invalid --scope {scope!r}: choose from {', '.join(_VALID2)}")
+    _scanner2, _scope_result2 = _scoped2(project_dir, scope)
+    _print_scope2(console, _scope_result2)
+    scanner = _scanner2
     source_files = scanner.scan()
     parser = CodeParser()
     adapters = get_adapters()
@@ -619,26 +636,30 @@ def test_all(
             console.print(f"  [dim]• AI Intelligence:[/dim] [dim]Bypassed ({e})[/dim]")
 
     # 5. Runtime Validation & Test Pack Execution
-    target_online = False
+    # Scope guard is established BEFORE any network access so the liveness
+    # probe itself is policy-checked (unauthorized targets stay offline).
+    from trace_engine.policy.scope import ScopeGuard as _ScopeGuard
+    from trace_engine.runtime.client import probe_target_online as _probe_online2
+    scope_guard = _ScopeGuard(
+        allowed_hosts=config.target.allowed_hosts,
+        allowed_ports=config.target.allowed_ports,
+        mode=config.target.scope_mode,
+    )
     try:
-        import httpx
-        with httpx.Client(timeout=1.5) as chk_client:
-            chk_client.get(resolved_target)
-            target_online = True
-    except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError, Exception):
-        target_online = False
+        scope_guard.allow_target(resolved_target)
+    except Exception:
+        pass
+    target_online = _probe_online2(scope_guard, resolved_target, timeout_seconds=1.5)
 
     if target_online:
         console.print(f"  [dim]Target Runtime Status:[/dim] [bold green]ONLINE[/bold green] ({resolved_target}) - executing active test packs")
     else:
         console.print(f"  [dim]Target Runtime Status:[/dim] [yellow]OFFLINE / UNREACHABLE[/yellow] ({resolved_target}) - static boundary correlation")
 
-    scope_guard = ScopeGuard(
-        allowed_hosts=config.target.allowed_hosts,
-        allowed_ports=config.target.allowed_ports,
-        mode=config.target.scope_mode,
-    )
-    scope_guard.allow_target(resolved_target)
+    try:
+        scope_guard.allow_target(resolved_target)
+    except Exception:
+        pass
     client = ScopedHttpClient(scope_guard=scope_guard, timeout_seconds=config.runtime.timeout_seconds)
     context = TestContext(
         target_base_url=resolved_target,
@@ -684,6 +705,12 @@ def test_all(
 
     report_payload = {
         "project": project_dir.name,
+        "scan_scope": {
+            "profile": _scope_result2.profile,
+            "included_top_dirs": _scope_result2.included_top_dirs,
+            "excluded_top_dirs": _scope_result2.excluded_top_dirs,
+            "note": _scope_result2.note,
+        },
         "endpoints_count": len(discovered_endpoints),
         "hypotheses_count": len(hypotheses),
         "findings_count": len(findings),
@@ -898,16 +925,16 @@ def lab(
         runner_path = lab_dir / "run.py"
         subprocess.run([sys.executable, str(runner_path), str(port)])
     else:
-        # Check health
-        import httpx
+        # Check health (loopback-only URL, still routed through the guard)
+        from trace_engine.runtime.client import probe_target_online as _probe_lab
+        lab_guard = ScopeGuard()
         try:
-            with httpx.Client(timeout=1.0) as client:
-                res = client.get(f"http://127.0.0.1:{port}/health")
-                if res.status_code == 200:
-                    console.print(f"\n[bold green]Vending API Lab is active and healthy on http://127.0.0.1:{port}[/bold green]\n")
-                    return
-        except Exception:
+            lab_guard.allow_target(f"http://127.0.0.1:{port}/health")
+        except ScopeViolationError:
             pass
+        if _probe_lab(lab_guard, f"http://127.0.0.1:{port}/health", timeout_seconds=1.0):
+            console.print(f"\n[bold green]Vending API Lab is active and healthy on http://127.0.0.1:{port}[/bold green]\n")
+            return
         console.print(f"\n[yellow]Vending API Lab is not running on port {port}.[/yellow]")
         console.print("Start it with: [bold green]trace lab start[/bold green]\n")
 

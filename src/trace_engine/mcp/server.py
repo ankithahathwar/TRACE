@@ -34,6 +34,7 @@ TRACE_TOOLS = [
                 "repository": {"type": "string", "default": ".", "description": "Path to target repository"},
                 "target": {"type": "string", "default": "http://127.0.0.1:18080", "description": "Target HTTP runtime URL"},
                 "profile": {"type": "string", "default": "standard", "enum": ["quick", "standard", "deep"]},
+                "scope": {"type": "string", "default": "full", "enum": ["full", "app", "fixtures"], "description": "Scan scope: full, app (exclude fixture/test dirs), or fixtures (fixtures only)"},
             },
             "required": ["repository"],
         },
@@ -257,8 +258,13 @@ class TraceMCPServer:
             return res.model_dump()
 
         elif name == "trace_scan":
-            # Execute scan programmatic flow
-            scanner = RepositoryScanner(repo_path)
+            # Execute scan programmatic flow (explicit scope; default full)
+            from trace_engine.scan_scope import scoped_scanner
+
+            try:
+                scanner, scope_result = scoped_scanner(repo_path, args.get("scope", "full"))
+            except ValueError as e:
+                return {"status": "error", "error": str(e)}
             source_files = scanner.scan()
             parser = CodeParser()
             adapters = get_adapters()
@@ -279,8 +285,16 @@ class TraceMCPServer:
             engine = HypothesisEngine()
             hypotheses = engine.derive_hypotheses(apm, discovered_endpoints)
 
+            from trace_engine.policy.scope import ScopeViolationError
+
             scope_guard = ScopeGuard()
-            scope_guard.allow_target(target_url)
+            try:
+                scope_guard.allow_target(target_url)
+            except ScopeViolationError as e:
+                return {
+                    "status": "refused",
+                    "error": f"Target refused by scope policy: {e}. No request was sent.",
+                }
             client = ScopedHttpClient(scope_guard=scope_guard)
             context = TestContext(
                 target_base_url=target_url,
@@ -306,6 +320,12 @@ class TraceMCPServer:
 
             return {
                 "status": "completed",
+                "scan_scope": {
+                    "profile": scope_result.profile,
+                    "included_top_dirs": scope_result.included_top_dirs,
+                    "excluded_top_dirs": scope_result.excluded_top_dirs,
+                    "note": scope_result.note,
+                },
                 "total_findings": len(findings),
                 "confirmed": sum(1 for f in findings if f.confidence.value == "CONFIRMED"),
                 "endpoints_audited": len(discovered_endpoints),

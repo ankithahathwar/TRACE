@@ -51,19 +51,36 @@ class AgentHarness:
 
     def build_remediation_package(self, finding: Finding, rank: int = 1) -> AgentRemediationPackage:
         """Packages rich context, surrounding AST lines, and exploit proof for an AI agent."""
-        file_path = self.repo_path / finding.source_location.file
-        if not file_path.exists():
-            for sub in self.repo_path.iterdir():
-                if sub.is_dir() and (sub / finding.source_location.file).exists():
-                    file_path = sub / finding.source_location.file
-                    break
+        from trace_engine.harness.patcher import WorkspaceBoundaryError
 
         code_snippet = ""
-        if file_path.exists():
-            lines = file_path.read_text(encoding="utf-8", errors="replace").splitlines()
-            start = max(0, finding.source_location.line_start - 5)
-            end = min(len(lines), finding.source_location.line_end + 10)
-            code_snippet = "\n".join(lines[start:end])
+        repo_root = self.repo_path.resolve()
+        file_path = None
+        try:
+            candidate = (self.repo_path / finding.source_location.file).resolve()
+            if candidate.is_relative_to(repo_root) and candidate.is_file():
+                file_path = candidate
+            else:
+                # Contained subdirectory fallback (stays inside the repo).
+                for sub in self.repo_path.iterdir():
+                    if sub.is_dir():
+                        try:
+                            alt = (sub / finding.source_location.file).resolve()
+                        except Exception:
+                            continue
+                        if alt.is_relative_to(repo_root) and alt.is_file():
+                            file_path = alt
+                            break
+        except Exception:
+            file_path = None
+        if file_path is not None:
+            try:
+                lines = file_path.read_text(encoding="utf-8", errors="replace").splitlines()
+                start = max(0, finding.source_location.line_start - 5)
+                end = min(len(lines), finding.source_location.line_end + 10)
+                code_snippet = "\n".join(lines[start:end])
+            except Exception:
+                code_snippet = ""
 
         return AgentRemediationPackage(
             finding_id=finding.id,
