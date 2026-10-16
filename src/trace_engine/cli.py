@@ -391,7 +391,7 @@ def test(
     if target_online:
         console.print(f"\n[dim]Executed {executed} test packs. {confirmed} attack paths confirmed at runtime.[/dim]\n")
 
-    print_findings_table(findings)
+    print_findings_table(findings, scope_profile=scope, endpoints_count=len(discovered_endpoints))
     console.print(f"[dim]Total findings identified: {len(findings)} (Saved to {trace_dir / 'findings.json'})[/dim]\n")
 
 
@@ -511,13 +511,18 @@ def scan(
         out_path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
         console.print(f"[bold green]JSON findings exported:[/bold green] [white]{out_path}[/white]\n")
     elif format.lower() == "markdown" or (output and str(output).endswith(".md")):
-        md = generate_markdown_report(findings, project_name=project_dir.name)
+        md = generate_markdown_report(
+            findings,
+            project_name=project_dir.name,
+            scope_summary=scope_result,
+            endpoints_count=len(discovered_endpoints),
+        )
         out_path = output or (trace_dir / "reports/trace_report.md")
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(md, encoding="utf-8")
         console.print(f"[bold green]Markdown report exported:[/bold green] [white]{out_path}[/white]\n")
     else:
-        print_findings_table(findings)
+        print_findings_table(findings, scope_profile=scope, endpoints_count=len(discovered_endpoints))
 
     try:
         from trace_engine.updater import check_for_updates, render_update_banner
@@ -725,10 +730,15 @@ def test_all(
     # 7. Print Terminal Output or Requested Format
     if format == "json":
         console.print_json(json.dumps(report_payload, default=str))
-    elif format == "markdown":
-        md = generate_markdown_report(findings, project_name=project_dir.name)
+    elif format.lower() == "markdown":
+        md = generate_markdown_report(
+            findings,
+            project_name=project_dir.name,
+            scope_summary=_scope_result2,
+            endpoints_count=len(discovered_endpoints),
+        )
         console.print(md)
-    elif format == "sarif":
+    elif format.lower() == "sarif":
         sarif_payload = generate_sarif_report(findings, project_name=project_dir.name, workspace_root=str(project_dir))
         console.print_json(json.dumps(sarif_payload))
     else:
@@ -738,6 +748,7 @@ def test_all(
             hypotheses_count=len(hypotheses),
             confirmed_count=confirmed_count,
             model_metrics=model_metrics,
+            scope_profile=scope,
         )
 
     try:

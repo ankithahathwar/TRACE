@@ -63,6 +63,16 @@ trace-results.sarif
 trace_results*.json
 *.tmp
 *.log
+!benchmark_final/logs/*.log
+
+# Archives & Bundles
+*.zip
+*.tar.gz
+*.tgz
+
+# Local Scan Output & Database Artifacts
+**/.trace/
+!benchmark_final/**
 
 # Operating System
 .DS_Store

@@ -1,0 +1,30 @@
+{
+  "npm_tarball_bytes": 219100,
+  "npm_tarball_kb": 219.1,
+  "npm_unpacked_bytes": 904600,
+  "npm_unpacked_kb": 904.6,
+  "npm_total_files": 134,
+  "lfs_pointers": {
+    "securebert_safetensors": {
+      "bytes": 498637432,
+      "mb_dec": 498.64,
+      "mib_bin": 475.54
+    },
+    "laya_dual_head_pt": {
+      "bytes": 267874026,
+      "mb_dec": 267.87,
+      "mib_bin": 255.46
+    },
+    "laya_dual_head_onnx": {
+      "bytes": 267968870,
+      "mb_dec": 267.97,
+      "mib_bin": 255.55
+    },
+    "total_all_three_mb": 1034.48,
+    "total_all_three_mib": 986.56,
+    "laya_pt_plus_onnx_mib": 511.02,
+    "securebert_mib": 475.54,
+    "sum_laya_plus_securebert_mib": 986.56
+  },
+  "discrepancy_explanation": "Claimed 990.67 MB weights was derived from summing Laya pt+onnx in binary MiB (approx 511.70) + SecureBERT in binary MiB (approx 478.97). Adding 1.83 MB claimed core gives 992.50 MB, which was labeled in BENCHMARKS.md Section 4 as TOTAL FOOTPRINT (ALL INCLUDED)."
+}

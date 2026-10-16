@@ -1,0 +1,12 @@
+{
+  "main_suite_command": "pytest tests/ -q --ignore=tests/test_laya_training.py",
+  "main_suite_result": "124 passed, 1 skipped in 95.70s",
+  "laya_tests_command": "pytest tests/test_laya_training.py::test_laya_training_corpus_generation tests/test_laya_training.py::test_run_intelligence_benchmark -q",
+  "laya_tests_result": "2 passed in 47.16s",
+  "total_unique_tests": 127,
+  "total_passed": 126,
+  "total_skipped": 1,
+  "skipped_test": "tests/test_v1_patcher_containment.py::test_symlink_escape_rejected",
+  "skipped_reason": "Windows privilege 1314 (symlink creation requires admin privilege without Developer Mode)",
+  "all_tests_exit_code": 0
+}

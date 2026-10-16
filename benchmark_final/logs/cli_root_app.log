@@ -1,0 +1,25 @@
+STDOUT:
+
+Starting TRACE Full Scan on TRACE
+  Target Runtime: http://offline.internal
+  Scan scope profile: app
+  Excluded directories (fixture/test scope):
+    - benchmarks/ (fixture/test directory pattern)
+    - labs/ (fixture/test directory pattern)
+    - test-repository/ (fixture/test directory pattern)
+    - testbed_hardcore/ (fixture/test directory pattern)
+    - tests/ (fixture/test directory pattern)
+  Included top-level entries: 5
+  âœ“ Ingestion: 151 files, 0 endpoints discovered
+  âœ“ Attack-Path Model: 564 nodes, 563 edges
+  âœ“ Security Hypotheses: 0 derived attack hypotheses
+  Scope policy: target http://offline.internal refused (Target host 
+'offline.internal' is blocked by TRACE ScopeGuard. Only approved local targets 
+are permitted.). Continuing static-only.
+  âœ“ Evidence Correlation: 0 correlated findings
+
+[32mNo correlated vulnerabilities detected.[0m
+
+
+
+STDERR:

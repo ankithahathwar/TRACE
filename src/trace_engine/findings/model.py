@@ -40,3 +40,6 @@ class Finding(BaseModel):
     observations: List[RuntimeObservation] = Field(default_factory=list)
     root_cause: Optional[str] = None
     short_action: Optional[str] = None
+    provenance: str = "application"
+    is_fixture: bool = False
+

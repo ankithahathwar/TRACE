@@ -1,0 +1,27 @@
+{
+  "head_commit": "1ddb2ba1052956b4fbbd3f6a2fbb5df4df5cfab0",
+  "branch": "security/remediation-and-scan-quality",
+  "status_porcelain": [
+    " D benchmarks/owasp-python",
+    " D models/laya-finetuned/laya_dual_head.onnx",
+    " D models/laya-finetuned/laya_dual_head.pt",
+    " D models/securebert-finetuned/model.safetensors",
+    " D research/laya",
+    " D research/securebert2",
+    "?? AUDIT_NOTES.md",
+    "?? AUDIT_NOTES1.md",
+    "?? BENCHMARK_CLAIM_AUDIT.md",
+    "?? SECURITY_AUDIT_REPORT.md",
+    "?? SECURITY_AUDIT_REPORT1.md",
+    "?? benchmark_final/"
+  ],
+  "diff_stat": [
+    "benchmarks/owasp-python                       | 1 -",
+    " models/laya-finetuned/laya_dual_head.onnx     | 3 ---",
+    " models/laya-finetuned/laya_dual_head.pt       | 3 ---",
+    " models/securebert-finetuned/model.safetensors | 3 ---",
+    " research/laya                                 | 1 -",
+    " research/securebert2                          | 1 -",
+    " 6 files changed, 12 deletions(-)"
+  ]
+}

@@ -63,6 +63,32 @@ npm install -g trace-sec
 trace
 ```
 
+### Python Source Installation (Local Clone)
+
+When working from a cloned source repository:
+
+```bash
+# Option A: Install in editable development mode (Recommended)
+pip install -e .
+
+# Now 'trace' is available directly in your environment:
+trace scan . --scope app --target http://offline.internal
+
+# Option B: Run via Python module with PYTHONPATH=src
+# PowerShell:
+$env:PYTHONPATH='src'; python -m trace_engine.cli scan . --scope app --target http://offline.internal
+
+# Linux / macOS (Bash / Zsh):
+PYTHONPATH=src python -m trace_engine.cli scan . --scope app --target http://offline.internal
+
+# Windows Command Prompt (CMD):
+set PYTHONPATH=src && python -m trace_engine.cli scan . --scope app --target http://offline.internal
+
+# Option C: Use repository wrapper scripts (auto-sets PYTHONPATH)
+.\trace.ps1 scan . --scope app --target http://offline.internal    # PowerShell
+.\trace.bat scan . --scope app --target http://offline.internal    # Windows CMD
+```
+
 ---
 
 ## 🤖 1-Click AI Coding Agent Integration (Claude Code & Cursor)
@@ -231,16 +257,43 @@ TRACE detects and validates the OWASP API Top 10 and critical enterprise vulnera
 
 ---
 
+## 🔍 Scan Scope Profiles & Honest Assessment Coverage
+
+TRACE provides explicit, verifiable scan scopes so test fixtures are never confused with application vulnerabilities, and reports honest coverage metrics:
+
+### 1. Scan Scope Profiles (`--scope`)
+
+| Profile | Command Example | Ingestion Scope | Use Case |
+|---|---|---|---|
+| **`app`** | `trace scan . --scope app` | Application code only. Excludes `tests/`, `labs/`, `testbed_hardcore/`, `test-repository/`, `benchmarks/`. | **Production code assessment**: Guarantees zero test/fixture false positives. |
+| **`fixtures`** | `trace scan . --scope fixtures` | Test and fixture assets only. | **Fixture audit**: Validates testbed and lab vulnerabilities. |
+| **`full`** | `trace scan . --scope full` *(default)* | Scans the entire repository. | **Full inventory**: Explicitly labels findings as `App` vs `Fixture/Test` with an informational notice. |
+
+### 2. Honest Zero-Endpoint & Coverage Disclosures
+
+Unlike traditional scanners that emit false "100% Clean" or "A (SECURE)" badges when analyzing non-web libraries, TRACE reports honest coverage:
+- **Zero Endpoints Detected**: If 0 HTTP routes are found, TRACE reports `No endpoints detected in scanned target`, notes that endpoint-based checks were not applicable, and explicitly warns:
+  > *Zero endpoint findings does NOT mean the target has no vulnerabilities or is secure.*
+- **Coverage Status Table**: Explicitly breaks down which security dimensions were `ASSESSED` (e.g. HTTP route invariants), which were `NOT APPLICABLE` (0 routes detected), and which analyzers were `NOT ASSESSED` (e.g. hardcoded secrets, package CVE manifests, cloud/IaC configuration).
+
+---
+
 ## 💻 CLI Command Reference
 
 ```bash
 # Run interactive menu wizard
 trace
 
-# Audit specific directory
-trace audit ./backend
+# Audit application code (excluding test/fixture directories)
+trace scan ./backend --scope app --target http://offline.internal
 
-# Full scan with target URL for dynamic correlation
+# Full repository audit with explicit finding provenance
+trace scan . --scope full --target http://offline.internal
+
+# Scan specific fixture or lab testbed
+trace scan testbed_hardcore --scope full --target http://offline.internal
+
+# Full scan with live target URL for dynamic correlation
 trace scan ./backend --target http://localhost:8000
 
 # Explain a specific finding with remediation code
@@ -266,40 +319,49 @@ trace doctor
 
 ## 🧪 Comprehensive Test Suite
 
-TRACE is verified by an automated test suite covering all frameworks, adapters, mathematical models, and AST self-healing engines:
+TRACE is verified by an automated test suite covering all frameworks, adapters, mathematical models, scan scope provenance, and AST self-healing engines:
 
 ```bash
-# Run test suite via Python virtual environment
-pytest tests/
+# Run main test suite (124 passed, 1 skipped)
+python -m pytest tests/ -q --ignore=tests/test_laya_training.py
+
+# Run Laya intelligence benchmarks (2 passed)
+python -m pytest tests/test_laya_training.py::test_laya_training_corpus_generation tests/test_laya_training.py::test_run_intelligence_benchmark -q
 ```
 
 ```text
 ============================= test session starts =============================
-platform win32 -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0
-collected 75 items
+platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0
+collected 127 items
 
-tests/test_adapters.py .............                                     [ 17%]
-tests/test_audit_report_fixes.py .....                                   [ 24%]
-tests/test_bugs_and_edge_cases.py .......                                [ 33%]
-tests/test_confidence_fusion.py ....                                     [ 38%]
-tests/test_django_adapter.py ..                                          [ 41%]
-tests/test_flask_adapter.py .                                            [ 42%]
-tests/test_hardcore_testbed.py ...                                       [ 46%]
-tests/test_harness_plugin.py ....                                        [ 52%]
-tests/test_intelligence.py ...                                           [ 56%]
-tests/test_interactive.py ..                                             [ 58%]
-tests/test_laya_training.py ..                                           [ 61%]
-tests/test_multi_language_remediation.py ..                              [ 64%]
-tests/test_new_vulnerabilities.py .........                              [ 76%]
-tests/test_php_adapter.py ..                                             [ 78%]
-tests/test_remediation_rollback.py ..                                    [ 81%]
-tests/test_sarif_exporter.py .                                           [ 82%]
-tests/test_statistical_timing.py ...                                     [ 86%]
-tests/test_trace.py ......                                               [ 94%]
-tests/test_updater.py ....                                               [100%]
+tests/test_adapters.py .............                                     [ 10%]
+tests/test_audit_report_fixes.py .....                                   [ 14%]
+tests/test_bugs_and_edge_cases.py .......                                [ 20%]
+tests/test_confidence_fusion.py ....                                     [ 23%]
+tests/test_django_adapter.py ..                                          [ 25%]
+tests/test_flask_adapter.py .                                            [ 26%]
+tests/test_hardcore_testbed.py ...                                       [ 28%]
+tests/test_harness_plugin.py ....                                        [ 31%]
+tests/test_intelligence.py ...                                           [ 34%]
+tests/test_interactive.py ..                                             [ 35%]
+tests/test_laya_training.py ..                                           [ 37%]
+tests/test_multi_language_remediation.py ..                              [ 39%]
+tests/test_new_vulnerabilities.py .........                              [ 46%]
+tests/test_php_adapter.py ..                                             [ 47%]
+tests/test_remediation_rollback.py ..                                    [ 49%]
+tests/test_route_extraction.py .....                                     [ 53%]
+tests/test_sarif_exporter.py .                                           [ 54%]
+tests/test_scan_scope.py .................                               [ 67%]
+tests/test_statistical_timing.py ...                                     [ 70%]
+tests/test_trace.py ......                                               [ 74%]
+tests/test_updater.py ....                                               [ 78%]
+tests/test_v1_patcher_containment.py ........s                           [ 85%]
+tests/test_v2_scope_guard.py ....................                        [100%]
 
-============================= 75 passed in 23.34s =============================
+======================== 126 passed, 1 skipped in 142.86s =====================
 ```
+
+*Note on skipped test*: `test_symlink_escape_rejected` requires elevated Administrator privileges on Windows (Privilege Error 1314); verified passing on POSIX CI.
 
 ---
 
@@ -323,8 +385,9 @@ TRACE/
 │   ├── mcp/                      # Model Context Protocol (MCP) server & config
 │   ├── security/                 # Bayesian fusion & statistical timing oracle
 │   └── testpacks/                # OWASP vulnerability testpack definitions
+├── benchmark_final/              # Authoritative frozen benchmark package & audit report
 ├── testbed_hardcore/             # Multi-service edge-case evaluation suite
-├── tests/                        # 75 unit and integration tests
+├── tests/                        # Automated regression and integration test suite (127 tests)
 ├── package.json                  # NPM distribution manifest (trace-sec)
 └── pyproject.toml                # Python package configuration
 ```

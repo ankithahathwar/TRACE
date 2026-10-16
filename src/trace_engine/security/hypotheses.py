@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from trace_engine.apm.model import AttackPathModel
 from trace_engine.framework.base import Endpoint
 from trace_engine.security.signals import SecuritySignal, SignalType
+from trace_engine.parsing.locations import SourceLocation
 
 
 class Severity(str, Enum):
@@ -43,6 +44,7 @@ class SecurityHypothesis(BaseModel):
     confidence_prior: float = 0.5  # Prior confidence from static signals alone
     static_evidence: List[str] = Field(default_factory=list)
     severity: Optional[Severity] = None  # Contextual severity override
+    source_location: Optional[SourceLocation] = None
 
 
 def has_unsafe_sql_construction(file_src: str) -> bool:

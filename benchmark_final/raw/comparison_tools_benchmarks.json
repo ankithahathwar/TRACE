@@ -1,0 +1,108 @@
+{
+  "bandit_testbed_hardcore": {
+    "version": "1.9.4",
+    "findings_count": 4,
+    "files_scanned": 0,
+    "wall_time_ms": {
+      "runs": [
+        22.1739,
+        19.7445,
+        17.9896,
+        20.8067,
+        17.89
+      ],
+      "count": 5,
+      "min": 17.89,
+      "max": 22.1739,
+      "mean": 19.7209,
+      "median": 19.7445,
+      "stddev": 1.8403,
+      "iqr": 2.8171,
+      "q1": 17.9896,
+      "q3": 20.8067
+    },
+    "findings": [
+      {
+        "test_id": "B608",
+        "issue_severity": "MEDIUM",
+        "filename": "testbed_hardcore\\backend\\views.py",
+        "line": 20,
+        "issue_text": "Possible SQL injection vector through string-based query construction."
+      },
+      {
+        "test_id": "B105",
+        "issue_severity": "LOW",
+        "filename": "testbed_hardcore\\backend\\views.py",
+        "line": 30,
+        "issue_text": "Possible hardcoded password: 'super-sensitive-vault-api-key'"
+      },
+      {
+        "test_id": "B105",
+        "issue_severity": "LOW",
+        "filename": "testbed_hardcore\\server.py",
+        "line": 37,
+        "issue_text": "Possible hardcoded password: 'AWS_SECRET_ACCESS_KEY=d8f92a3b4c5e6f7a'"
+      },
+      {
+        "test_id": "B105",
+        "issue_severity": "LOW",
+        "filename": "testbed_hardcore\\server.py",
+        "line": 46,
+        "issue_text": "Possible hardcoded password: 'go-vault-encrypted-master-key'"
+      }
+    ]
+  },
+  "semgrep_testbed_hardcore": {
+    "version": "1.181.0",
+    "findings_count": 1,
+    "wall_time_ms": {
+      "runs": [
+        19.245,
+        17.5505,
+        19.2968,
+        16.7288,
+        18.6469
+      ],
+      "count": 5,
+      "min": 16.7288,
+      "max": 19.2968,
+      "mean": 18.2936,
+      "median": 18.6469,
+      "stddev": 1.1222,
+      "iqr": 1.6945,
+      "q1": 17.5505,
+      "q3": 19.245
+    },
+    "findings": [
+      {
+        "check_id": "python.django.security.injection.tainted-sql-string.tainted-sql-string",
+        "severity": "ERROR",
+        "path": "testbed_hardcore\\backend\\views.py",
+        "line": 20,
+        "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because ma"
+      }
+    ]
+  },
+  "semgrep_test_repository": {
+    "version": "1.181.0",
+    "findings_count": 0,
+    "wall_time_ms": {
+      "runs": [
+        18.6572,
+        17.5003,
+        18.8103,
+        19.6005,
+        16.252
+      ],
+      "count": 5,
+      "min": 16.252,
+      "max": 19.6005,
+      "mean": 18.1641,
+      "median": 18.6572,
+      "stddev": 1.3058,
+      "iqr": 1.31,
+      "q1": 17.5003,
+      "q3": 18.8103
+    }
+  }
+}

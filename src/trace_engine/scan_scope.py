@@ -150,3 +150,21 @@ def resolve_scope(repo_path: Path, profile: str = "full") -> ScanScopeResult:
         included_top_dirs=fixture_top,
         excluded_top_dirs={d: "non-fixture directory (fixtures-only profile)" for d in top_dirs if d not in fixture_top},
     )
+
+
+def is_fixture_path(file_path: str) -> bool:
+    """Return True if any path segment matches fixture/test directory patterns."""
+    if not file_path:
+        return False
+    parts = Path(file_path).parts
+    for part in parts:
+        lowered = part.lower()
+        if any(fnmatch.fnmatch(lowered, pat.lower()) for pat in FIXTURE_DIR_PATTERNS):
+            return True
+    return False
+
+
+def get_path_provenance(file_path: str) -> str:
+    """Classify file provenance as 'fixture/test' or 'application'."""
+    return "fixture/test" if is_fixture_path(file_path) else "application"
+

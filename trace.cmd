@@ -1,5 +1,6 @@
 @echo off
 setlocal
+set "PYTHONPATH=%~dp0src;%PYTHONPATH%"
 if exist "%~dp0.venv\Scripts\trace.exe" (
     "%~dp0.venv\Scripts\trace.exe" %*
 ) else (

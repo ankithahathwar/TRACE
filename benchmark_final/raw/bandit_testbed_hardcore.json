@@ -1,0 +1,152 @@
+{
+  "errors": [],
+  "generated_at": "2026-10-16T14:10:37Z",
+  "metrics": {
+    "_totals": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 1,
+      "CONFIDENCE.MEDIUM": 3,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 3,
+      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 179,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "testbed_hardcore\\backend\\urls.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 6,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "testbed_hardcore\\backend\\views.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 1,
+      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 44,
+      "nosec": 0,
+      "skipped_tests": 0
+    },
+    "testbed_hardcore\\server.py": {
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 2,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 129,
+      "nosec": 0,
+      "skipped_tests": 0
+    }
+  },
+  "results": [
+    {
+      "code": "19     # Vulnerable raw SQL execution with timing delay:\n20     query = f\"SELECT * FROM system_metrics WHERE category = '{filter_val}'\"\n21     # AST sink: db.execute(query)\n",
+      "col_offset": 12,
+      "end_col_offset": 75,
+      "filename": "testbed_hardcore\\backend\\views.py",
+      "issue_confidence": "LOW",
+      "issue_cwe": {
+        "id": 89,
+        "link": "https://cwe.mitre.org/data/definitions/89.html"
+      },
+      "issue_severity": "MEDIUM",
+      "issue_text": "Possible SQL injection vector through string-based query construction.",
+      "line_number": 20,
+      "line_range": [
+        20
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions"
+    },
+    {
+      "code": "29     # AST sink: db.query(SecretEntry).filter_by(id=entry_id).first()\n30     return Response({\"entry_id\": entry_id, \"secret\": \"super-sensitive-vault-api-key\"})\n31 \n",
+      "col_offset": 43,
+      "end_col_offset": 51,
+      "filename": "testbed_hardcore\\backend\\views.py",
+      "issue_confidence": "MEDIUM",
+      "issue_cwe": {
+        "id": 259,
+        "link": "https://cwe.mitre.org/data/definitions/259.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Possible hardcoded password: 'super-sensitive-vault-api-key'",
+      "line_number": 30,
+      "line_range": [
+        30
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html",
+      "test_id": "B105",
+      "test_name": "hardcoded_password_string"
+    },
+    {
+      "code": "36                 \"vault_id\": \"vault-primary\",\n37                 \"secret_value\": \"AWS_SECRET_ACCESS_KEY=d8f92a3b4c5e6f7a\",\n38                 \"user-a\": \"vault-admin\",\n39                 \"leak\": \"Cross-tenant unauthorized data access\"\n40             })\n41 \n42         # Go BOLA: /api/v1/go/vault/{id}\n43         if re.search(r\"^/api/v1/go/vault/[^/]+\", url):\n44             return self._send_json(200, {\n",
+      "col_offset": 16,
+      "end_col_offset": 30,
+      "filename": "testbed_hardcore\\server.py",
+      "issue_confidence": "MEDIUM",
+      "issue_cwe": {
+        "id": 259,
+        "link": "https://cwe.mitre.org/data/definitions/259.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Possible hardcoded password: 'AWS_SECRET_ACCESS_KEY=d8f92a3b4c5e6f7a'",
+      "line_number": 37,
+      "line_range": [
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html",
+      "test_id": "B105",
+      "test_name": "hardcoded_password_string"
+    },
+    {
+      "code": "45                 \"id\": \"vault-go-88\",\n46                 \"secret\": \"go-vault-encrypted-master-key\",\n47                 \"tenant_id\": \"tenant-corp-99\",\n48                 \"user-a\": \"go-sec-lead\",\n49                 \"leak\": \"Go Gin cross-tenant unauthorized data access\",\n50             })\n51 \n52         # Kotlin BOLA: /api/v3/patients/{patientId}/records/export\n53         if re.search(r\"^/api/v3/patients/[^/]+/records/export\", url):\n",
+      "col_offset": 16,
+      "end_col_offset": 24,
+      "filename": "testbed_hardcore\\server.py",
+      "issue_confidence": "MEDIUM",
+      "issue_cwe": {
+        "id": 259,
+        "link": "https://cwe.mitre.org/data/definitions/259.html"
+      },
+      "issue_severity": "LOW",
+      "issue_text": "Possible hardcoded password: 'go-vault-encrypted-master-key'",
+      "line_number": 46,
+      "line_range": [
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50
+      ],
+      "more_info": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html",
+      "test_id": "B105",
+      "test_name": "hardcoded_password_string"
+    }
+  ]
+}

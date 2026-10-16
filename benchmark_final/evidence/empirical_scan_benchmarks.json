@@ -1,0 +1,151 @@
+{
+  "environment": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+    "python_version": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "torch_version": "2.12.1+cpu",
+    "torch_cuda_available": false,
+    "workspace_root": "C:\\Users\\Ankitha Hathwar\\OneDrive\\Desktop\\TRACE"
+  },
+  "scans": {
+    "self_full": {
+      "target": ".",
+      "scope": "full",
+      "files_count": 196,
+      "endpoints_count": 38,
+      "nodes_count": 881,
+      "edges_count": 902,
+      "hypotheses_count": 28,
+      "findings_count": 28,
+      "bounded_paths_depth3": 65,
+      "severities": {
+        "MEDIUM": 11,
+        "HIGH": 15,
+        "CRITICAL": 2
+      },
+      "categories": {
+        "CORS": 11,
+        "BFLA": 4,
+        "AUTHENTICATION": 10,
+        "INJECTION": 2,
+        "BOLA": 1
+      },
+      "latencies_ms": {
+        "ingest_ms": 185.03,
+        "parse_and_extract_ms": 399.8,
+        "apm_synthesis_ms": 9.48,
+        "hypotheses_ms": 4.63,
+        "correlation_ms": 9.82,
+        "total_wall_ms": 608.91
+      }
+    },
+    "self_app": {
+      "target": ".",
+      "scope": "app",
+      "files_count": 144,
+      "endpoints_count": 0,
+      "nodes_count": 551,
+      "edges_count": 550,
+      "hypotheses_count": 0,
+      "findings_count": 0,
+      "bounded_paths_depth3": 0,
+      "severities": {},
+      "categories": {},
+      "latencies_ms": {
+        "ingest_ms": 176.03,
+        "parse_and_extract_ms": 337.94,
+        "apm_synthesis_ms": 5.11,
+        "hypotheses_ms": 0.01,
+        "correlation_ms": 0.0,
+        "total_wall_ms": 519.1
+      }
+    },
+    "self_fixtures": {
+      "target": ".",
+      "scope": "fixtures",
+      "files_count": 50,
+      "endpoints_count": 38,
+      "nodes_count": 327,
+      "edges_count": 348,
+      "hypotheses_count": 28,
+      "findings_count": 28,
+      "bounded_paths_depth3": 65,
+      "severities": {
+        "MEDIUM": 11,
+        "HIGH": 15,
+        "CRITICAL": 2
+      },
+      "categories": {
+        "CORS": 11,
+        "BFLA": 4,
+        "AUTHENTICATION": 10,
+        "INJECTION": 2,
+        "BOLA": 1
+      },
+      "latencies_ms": {
+        "ingest_ms": 54.4,
+        "parse_and_extract_ms": 44.01,
+        "apm_synthesis_ms": 2.99,
+        "hypotheses_ms": 3.63,
+        "correlation_ms": 4.07,
+        "total_wall_ms": 109.25
+      }
+    },
+    "testrepo_full": {
+      "target": "test-repository",
+      "scope": "full",
+      "files_count": 16,
+      "endpoints_count": 7,
+      "nodes_count": 59,
+      "edges_count": 64,
+      "hypotheses_count": 8,
+      "findings_count": 8,
+      "bounded_paths_depth3": 13,
+      "severities": {
+        "MEDIUM": 5,
+        "HIGH": 3
+      },
+      "categories": {
+        "CORS": 5,
+        "BFLA": 1,
+        "AUTHENTICATION": 2
+      },
+      "latencies_ms": {
+        "ingest_ms": 12.82,
+        "parse_and_extract_ms": 6.84,
+        "apm_synthesis_ms": 0.84,
+        "hypotheses_ms": 0.33,
+        "correlation_ms": 0.59,
+        "total_wall_ms": 21.45
+      }
+    },
+    "testbed_hardcore_full": {
+      "target": "testbed_hardcore",
+      "scope": "full",
+      "files_count": 6,
+      "endpoints_count": 10,
+      "nodes_count": 40,
+      "edges_count": 45,
+      "hypotheses_count": 8,
+      "findings_count": 8,
+      "bounded_paths_depth3": 17,
+      "severities": {
+        "HIGH": 7,
+        "MEDIUM": 1
+      },
+      "categories": {
+        "AUTHENTICATION": 6,
+        "BOLA": 1,
+        "CORS": 1
+      },
+      "latencies_ms": {
+        "ingest_ms": 6.14,
+        "parse_and_extract_ms": 4.31,
+        "apm_synthesis_ms": 0.58,
+        "hypotheses_ms": 0.45,
+        "correlation_ms": 1.16,
+        "total_wall_ms": 12.68
+      }
+    }
+  }
+}

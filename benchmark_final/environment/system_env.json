@@ -1,0 +1,45 @@
+{
+  "system": {
+    "os_name": "Microsoft Windows 11 Home Single Language",
+    "os_version": "10.0.26100",
+    "architecture": "AMD64 / 64-bit",
+    "host_platform": "Windows-10-10.0.26100-SP0"
+  },
+  "hardware": {
+    "cpu_model": "Intel(R) Core(TM) Ultra 5 125H",
+    "cpu_cores_physical": 14,
+    "cpu_logical_processors": 18,
+    "ram_total_bytes": 16866873344,
+    "ram_total_gb": 15.71,
+    "gpu_model": "Intel(R) Arc(TM) Pro Graphics"
+  },
+  "software_runtimes": {
+    "python_version": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+    "node_version": "v24.12.0",
+    "npm_version": "11.6.2"
+  },
+  "trace_version": "2.1.18",
+  "comparison_tools": {
+    "bandit": {
+      "version": "1.9.4",
+      "executable": ".venv/Scripts/bandit.exe",
+      "install_method": "pip install bandit in isolated virtual environment (.venv)"
+    },
+    "semgrep": {
+      "version": "1.181.0",
+      "executable": ".venv/Scripts/semgrep.exe",
+      "install_method": "pip install semgrep in isolated virtual environment (.venv)"
+    }
+  },
+  "dependencies": {
+    "torch": "2.12.1+cpu",
+    "pytest": "9.1.1",
+    "pydantic": "2.12.5",
+    "typer": "0.15.1",
+    "rich": "13.9.4",
+    "networkx": "3.4.2",
+    "httpx": "0.28.1",
+    "tree_sitter": "0.24.0",
+    "psutil": "7.0.0"
+  }
+}
